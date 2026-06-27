@@ -11,6 +11,10 @@
         text-color="#bfcbd9"
         active-text-color="#409EFF"
       >
+        <el-menu-item index="/dashboard">
+          <el-icon><HomeFilled /></el-icon>
+          <span>数据概览</span>
+        </el-menu-item>
         <el-menu-item index="/testcases">
           <el-icon><Document /></el-icon>
           <span>用例管理</span>
