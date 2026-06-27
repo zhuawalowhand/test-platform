@@ -10,7 +10,11 @@ from .routers import users, testcases
 # 启动时创建所有表
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title=settings.APP_NAME)
+app = FastAPI(
+    title=settings.APP_NAME,
+    description="接口测试平台 API - 支持用例管理、执行和报告",
+    version="0.1.0"
+)
 
 # 注册路由
 app.include_router(users.router)
