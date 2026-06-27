@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 
 from .database import get_db, engine, Base
 from .config import settings
-from .models import User, TestCase  # noqa: F401 - 确保表被创建
-from .routers import users, testcases
+from .models import User, TestCase, TestResult, TestReport  # noqa: F401
+from .routers import users, testcases, execute
 
 # 启动时创建所有表
 Base.metadata.create_all(bind=engine)
@@ -19,6 +19,7 @@ app = FastAPI(
 # 注册路由
 app.include_router(users.router)
 app.include_router(testcases.router)
+app.include_router(execute.router)
 
 
 @app.get("/")
