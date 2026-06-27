@@ -22,14 +22,20 @@ async def execute_tests(
     - 不传 testcase_ids 则执行当前用户的所有用例
     - 返回完整的测试报告（包含每条用例的执行结果）
     """
+    # DEBUG
+    print(f"[DEBUG] current_user.id = {current_user.id}")
+    print(f"[DEBUG] request.testcase_ids = {request.testcase_ids}")
+
     # 获取要执行的用例
     query = db.query(TestCase).filter(TestCase.owner_id == current_user.id)
     if request.testcase_ids:
         query = query.filter(TestCase.id.in_(request.testcase_ids))
     testcases = query.all()
 
+    print(f"[DEBUG] found testcases count = {len(testcases)}")
+
     if not testcases:
-        raise HTTPException(status_code=404, detail="没有找到可执行的用例")
+        raise HTTPException(status_code=404, detail=f"没有找到可执行的用例 (user_id={current_user.id})")
 
     # 创建报告
     report = TestReport(
