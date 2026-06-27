@@ -70,7 +70,11 @@ class TestCaseResponse(BaseModel):
 
 # ===== 执行与报告 =====
 class ExecuteRequest(BaseModel):
-    testcase_ids: Optional[List[int]] = Field(None, description="要执行的用例ID列表，为空则执行全部")
+    testcase_ids: Optional[List[int]] = Field(
+        None,
+        description="要执行的用例ID列表，留空或null则执行全部",
+        examples=[None, [1, 2, 3]]
+    )
     name: Optional[str] = Field(None, description="报告名称", examples=["回归测试 v1.0"])
 
 
