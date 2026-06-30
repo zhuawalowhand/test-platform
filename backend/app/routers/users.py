@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models import User
-from ..schemas import UserCreate, UserResponse, UserLogin, Token
+from ..schemas import UserCreate, UserResponse, UserLogin, UserUpdate, Token
 from ..auth import get_password_hash, verify_password, create_access_token, get_current_user
 
 router = APIRouter(prefix="/api/users", tags=["用户管理"])
@@ -55,4 +55,25 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserResponse, summary="获取当前用户")
 def get_me(current_user: User = Depends(get_current_user)):
     """获取当前登录用户的信息（需要认证）"""
+    return current_user
+
+
+@router.put("/me", response_model=UserResponse, summary="更新个人信息")
+def update_me(
+    user_update: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """更新当前用户的信息（邮箱、密码）"""
+    if user_update.email and user_update.email != current_user.email:
+        existing = db.query(User).filter(User.email == user_update.email).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="邮箱已被使用")
+        current_user.email = user_update.email
+
+    if user_update.password:
+        current_user.hashed_password = get_password_hash(user_update.password)
+
+    db.commit()
+    db.refresh(current_user)
     return current_user
