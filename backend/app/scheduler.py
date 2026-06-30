@@ -16,6 +16,8 @@ from .executor import execute_single_testcase
 from .webhook import send_webhook_notification
 
 logger = logging.getLogger(__name__)
+# 确保日志能在 uvicorn 中显示
+logging.basicConfig(level=logging.INFO)
 
 # 全局调度器实例
 scheduler = AsyncIOScheduler(timezone="Asia/Shanghai")

@@ -54,7 +54,7 @@ def health_check(db: Session = Depends(get_db)):
         return {"status": "error", "database": str(e)}
 
 
-@app.get("/scheduler/status", tags=["调度器"])
+@app.get("/api/scheduler/status", tags=["调度器"])
 def scheduler_status():
     """查看调度器状态和已注册的任务"""
     from .scheduler import get_jobs_info
