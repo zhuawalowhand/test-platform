@@ -52,7 +52,11 @@
     >
       <el-table-column type="selection" width="50" />
       <el-table-column prop="id" label="ID" width="60" />
-      <el-table-column prop="name" label="用例名称" />
+      <el-table-column prop="name" label="用例名称">
+        <template #default="{ row }">
+          <el-link type="primary" @click="router.push(`/testcases/${row.id}`)">{{ row.name }}</el-link>
+        </template>
+      </el-table-column>
       <el-table-column prop="description" label="描述" show-overflow-tooltip />
       <el-table-column prop="method" label="方法" width="80">
         <template #default="{ row }">

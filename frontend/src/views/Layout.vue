@@ -1,15 +1,15 @@
 <template>
   <el-container class="layout-container">
-    <el-aside width="200px">
+    <el-aside :style="{ backgroundColor: isDark ? '#1f2937' : '#304156' }">
       <div class="logo">
         <h3>测试平台</h3>
       </div>
       <el-menu
         :default-active="route.path"
         router
-        background-color="#304156"
-        text-color="#bfcbd9"
-        active-text-color="#409EFF"
+        :background-color="isDark ? '#1f2937' : '#304156'"
+        :text-color="isDark ? '#9ca3af' : '#bfcbd9'"
+        :active-text-color="isDark ? '#60a5fa' : '#409EFF'"
       >
         <el-menu-item index="/dashboard">
           <el-icon><HomeFilled /></el-icon>
@@ -41,8 +41,8 @@
     <el-container>
       <el-header>
         <div class="header-right">
-          <el-button @click="toggleTheme" :icon="isDark ? 'Sunny' : 'Moon'" circle size="small">
-            {{ isDark ? '☀️' : '🌙' }}
+          <el-button @click="toggleTheme" circle size="small">
+            <el-icon><component :is="isDark ? 'Sunny' : 'Moon'" /></el-icon>
           </el-button>
           <span>{{ username }}</span>
           <el-button type="danger" text @click="handleLogout">退出</el-button>
@@ -60,6 +60,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { userApi } from '../api'
+import { Sunny, Moon } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -105,7 +106,7 @@ const handleLogout = () => {
 }
 
 .el-aside {
-  background-color: #304156;
+  transition: background-color 0.3s;
 }
 
 .logo {

@@ -33,31 +33,151 @@ body {
   transition: background-color 0.3s, color 0.3s;
 }
 
+/* 强制深色模式覆盖 Element Plus */
 html.dark .el-card {
-  background-color: var(--card-bg);
-  border-color: var(--border-color);
+  background-color: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+}
+
+html.dark .el-card__header {
+  border-bottom-color: var(--border-color) !important;
+  color: var(--text-color) !important;
 }
 
 html.dark .el-table {
-  background-color: var(--card-bg);
-  --el-table-bg-color: var(--card-bg);
-  --el-table-tr-bg-color: var(--card-bg);
-  --el-table-header-bg-color: var(--header-bg);
-  --el-table-row-hover-bg-color: var(--header-bg);
-  --el-table-border-color: var(--border-color);
+  --el-table-bg-color: var(--card-bg) !important;
+  --el-table-tr-bg-color: var(--card-bg) !important;
+  --el-table-header-bg-color: var(--header-bg) !important;
+  --el-table-row-hover-bg-color: var(--header-bg) !important;
+  --el-table-border-color: var(--border-color) !important;
+  --el-table-text-color: var(--text-color) !important;
+  --el-table-header-text-color: var(--text-color) !important;
 }
 
-html.dark .el-input__wrapper,
-html.dark .el-textarea__inner,
+html.dark .el-input__wrapper {
+  background-color: var(--card-bg) !important;
+  box-shadow: 0 0 0 1px var(--border-color) inset !important;
+}
+
+html.dark .el-input__inner {
+  color: var(--text-color) !important;
+}
+
+html.dark .el-textarea__inner {
+  background-color: var(--card-bg) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+}
+
 html.dark .el-select .el-input__wrapper {
-  background-color: var(--card-bg);
-  box-shadow: 0 0 0 1px var(--border-color) inset;
+  background-color: var(--card-bg) !important;
+  box-shadow: 0 0 0 1px var(--border-color) inset !important;
 }
 
 html.dark .el-dialog {
-  background-color: var(--card-bg);
+  background-color: var(--card-bg) !important;
+}
+
+html.dark .el-dialog__header {
+  border-bottom-color: var(--border-color) !important;
+}
+
+html.dark .el-dialog__title {
+  color: var(--text-color) !important;
 }
 
 html.dark .el-form-item__label {
-  color: var(--text-color);
+  color: var(--text-color) !important;
+}
+
+html.dark .el-form-item__content {
+  color: var(--text-color) !important;
+}
+
+html.dark .el-menu {
+  background-color: var(--sidebar-bg) !important;
+}
+
+html.dark .el-menu-item {
+  color: var(--sidebar-text) !important;
+}
+
+html.dark .el-menu-item:hover {
+  background-color: var(--header-bg) !important;
+}
+
+html.dark .el-menu-item.is-active {
+  color: var(--sidebar-active) !important;
+}
+
+html.dark .el-button--primary {
+  --el-button-bg-color: #3b82f6 !important;
+  --el-button-border-color: #3b82f6 !important;
+}
+
+html.dark .el-button--success {
+  --el-button-bg-color: #10b981 !important;
+  --el-button-border-color: #10b981 !important;
+}
+
+html.dark .el-button--danger {
+  --el-button-bg-color: #ef4444 !important;
+  --el-button-border-color: #ef4444 !important;
+}
+
+html.dark .el-button--warning {
+  --el-button-bg-color: #f59e0b !important;
+  --el-button-border-color: #f59e0b !important;
+}
+
+html.dark .el-button:not(.el-button--primary):not(.el-button--success):not(.el-button--danger):not(.el-button--warning) {
+  --el-button-bg-color: var(--card-bg) !important;
+  --el-button-border-color: var(--border-color) !important;
+  --el-button-text-color: var(--text-color) !important;
+}
+
+html.dark .el-tag {
+  --el-tag-bg-color: var(--header-bg) !important;
+  --el-tag-border-color: var(--border-color) !important;
+  --el-tag-text-color: var(--text-color) !important;
+}
+
+html.dark .el-pagination {
+  --el-pagination-bg-color: var(--card-bg) !important;
+  --el-pagination-text-color: var(--text-color) !important;
+  --el-pagination-button-bg-color: var(--card-bg) !important;
+}
+
+html.dark .el-dropdown-menu {
+  background-color: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+}
+
+html.dark .el-dropdown-menu__item {
+  color: var(--text-color) !important;
+}
+
+html.dark .el-dropdown-menu__item:hover {
+  background-color: var(--header-bg) !important;
+}
+
+html.dark .el-message-box {
+  background-color: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+}
+
+html.dark .el-message-box__title {
+  color: var(--text-color) !important;
+}
+
+html.dark .el-message-box__message {
+  color: var(--text-color) !important;
+}
+
+html.dark .el-statistic__title {
+  color: var(--text-color) !important;
+}
+
+html.dark .el-statistic__content {
+  color: var(--text-color) !important;
 }
