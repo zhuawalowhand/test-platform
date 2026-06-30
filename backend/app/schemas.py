@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 
 # ===== 用户相关 =====
@@ -25,12 +25,23 @@ class UserLogin(BaseModel):
     password: str = Field(..., description="密码", examples=["123456"])
 
 
+class UserUpdate(BaseModel):
+    email: Optional[EmailStr] = Field(None, description="邮箱")
+    password: Optional[str] = Field(None, description="新密码")
+
+
 class Token(BaseModel):
     access_token: str = Field(..., description="JWT 访问令牌")
     token_type: str = Field(..., description="令牌类型", examples=["bearer"])
 
 
 # ===== 用例相关 =====
+class AssertionRule(BaseModel):
+    type: str = Field(..., description="断言类型: body_contains, body_json, header, response_time")
+    target: str = Field(..., description="断言目标")
+    expected: Any = Field(..., description="预期值")
+
+
 class TestCaseCreate(BaseModel):
     name: str = Field(..., description="用例名称", examples=["测试百度首页"])
     description: Optional[str] = Field(None, description="用例描述")
@@ -39,6 +50,9 @@ class TestCaseCreate(BaseModel):
     headers: Optional[str] = Field("{}", description="请求头（JSON字符串）")
     body: Optional[str] = Field("{}", description="请求体（JSON字符串）")
     expected_status: int = Field(200, description="预期状态码", examples=[200])
+    tags: Optional[str] = Field(None, description="标签（逗号分隔）", examples=["smoke,regression"])
+    assertions: Optional[str] = Field(None, description="高级断言规则（JSON）")
+    sort_order: Optional[int] = Field(0, description="排序")
 
 
 class TestCaseUpdate(BaseModel):
@@ -49,6 +63,9 @@ class TestCaseUpdate(BaseModel):
     headers: Optional[str] = Field(None, description="请求头（JSON字符串）")
     body: Optional[str] = Field(None, description="请求体（JSON字符串）")
     expected_status: Optional[int] = Field(None, description="预期状态码")
+    tags: Optional[str] = Field(None, description="标签")
+    assertions: Optional[str] = Field(None, description="高级断言规则")
+    sort_order: Optional[int] = Field(None, description="排序")
 
 
 class TestCaseResponse(BaseModel):
@@ -60,6 +77,9 @@ class TestCaseResponse(BaseModel):
     headers: Optional[str] = Field(None, description="请求头")
     body: Optional[str] = Field(None, description="请求体")
     expected_status: int = Field(..., description="预期状态码")
+    tags: Optional[str] = Field(None, description="标签")
+    assertions: Optional[str] = Field(None, description="断言规则")
+    sort_order: int = Field(0, description="排序")
     owner_id: int = Field(..., description="所属用户ID")
     created_at: datetime = Field(..., description="创建时间")
     updated_at: Optional[datetime] = Field(None, description="更新时间")
@@ -76,6 +96,7 @@ class ExecuteRequest(BaseModel):
         examples=[None, [1, 2, 3]]
     )
     name: Optional[str] = Field(None, description="报告名称", examples=["回归测试 v1.0"])
+    environment_id: Optional[int] = Field(None, description="环境ID")
 
 
 class TestResultResponse(BaseModel):
@@ -87,6 +108,7 @@ class TestResultResponse(BaseModel):
     response_body: Optional[str] = Field(None, description="响应内容")
     duration_ms: Optional[float] = Field(None, description="耗时（毫秒）")
     error_message: Optional[str] = Field(None, description="错误信息")
+    assertion_results: Optional[str] = Field(None, description="断言结果详情")
     executed_at: datetime = Field(..., description="执行时间")
 
     class Config:
@@ -101,6 +123,7 @@ class TestReportResponse(BaseModel):
     failed: int = Field(..., description="失败数")
     duration_ms: float = Field(..., description="总耗时（毫秒）")
     pass_rate: float = Field(..., description="通过率（%）")
+    environment: Optional[str] = Field(None, description="执行环境")
     created_at: datetime = Field(..., description="创建时间")
 
     class Config:
@@ -109,3 +132,60 @@ class TestReportResponse(BaseModel):
 
 class TestReportDetail(TestReportResponse):
     results: List[TestResultResponse] = Field(..., description="执行结果详情")
+
+
+# ===== 环境配置 =====
+class EnvironmentCreate(BaseModel):
+    name: str = Field(..., description="环境名称", examples=["dev"])
+    base_url: str = Field(..., description="基础URL", examples=["https://dev.api.example.com"])
+    variables: Optional[str] = Field("{}", description="环境变量（JSON）")
+
+
+class EnvironmentUpdate(BaseModel):
+    name: Optional[str] = None
+    base_url: Optional[str] = None
+    variables: Optional[str] = None
+
+
+class EnvironmentResponse(BaseModel):
+    id: int
+    name: str
+    base_url: str
+    variables: Optional[str]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ===== 定时任务 =====
+class ScheduledTaskCreate(BaseModel):
+    name: str = Field(..., description="任务名称")
+    cron_expression: str = Field(..., description="Cron 表达式", examples=["0 0 * * *"])
+    testcase_ids: Optional[str] = Field("[]", description="用例ID列表（JSON）")
+    environment_id: Optional[int] = Field(None, description="环境ID")
+    webhook_url: Optional[str] = Field(None, description="通知 Webhook URL")
+
+
+class ScheduledTaskUpdate(BaseModel):
+    name: Optional[str] = None
+    cron_expression: Optional[str] = None
+    testcase_ids: Optional[str] = None
+    environment_id: Optional[int] = None
+    enabled: Optional[bool] = None
+    webhook_url: Optional[str] = None
+
+
+class ScheduledTaskResponse(BaseModel):
+    id: int
+    name: str
+    cron_expression: str
+    testcase_ids: Optional[str]
+    environment_id: Optional[int]
+    enabled: bool
+    last_run: Optional[datetime]
+    webhook_url: Optional[str]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

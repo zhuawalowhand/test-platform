@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from ..database import get_db
 from ..models import TestCase, User
@@ -20,6 +20,8 @@ def create_testcase(
     创建新的测试用例
     - method: GET / POST / PUT / DELETE
     - headers 和 body 使用 JSON 字符串格式
+    - tags: 逗号分隔的标签
+    - assertions: 高级断言规则（JSON）
     """
     db_testcase = TestCase(**testcase.model_dump(), owner_id=current_user.id)
     db.add(db_testcase)
@@ -32,11 +34,50 @@ def create_testcase(
 def list_testcases(
     skip: int = 0,
     limit: int = 100,
+    tag: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """获取当前用户的所有测试用例（支持分页）"""
-    return db.query(TestCase).filter(TestCase.owner_id == current_user.id).offset(skip).limit(limit).all()
+    """获取当前用户的所有测试用例（支持分页和标签筛选）"""
+    query = db.query(TestCase).filter(TestCase.owner_id == current_user.id)
+    if tag:
+        query = query.filter(TestCase.tags.contains(tag))
+    return query.order_by(TestCase.sort_order.asc(), TestCase.id.asc()).offset(skip).limit(limit).all()
+
+
+@router.get("/tags", summary="所有标签")
+def list_tags(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """获取所有使用过的标签"""
+    testcases = db.query(TestCase).filter(TestCase.owner_id == current_user.id).all()
+    tags = set()
+    for tc in testcases:
+        if tc.tags:
+            for tag in tc.tags.split(","):
+                tag = tag.strip()
+                if tag:
+                    tags.add(tag)
+    return sorted(list(tags))
+
+
+@router.post("/reorder", summary="重新排序")
+def reorder_testcases(
+    order: List[int],
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """批量更新用例排序，传入用例ID列表（按顺序）"""
+    for idx, testcase_id in enumerate(order):
+        tc = db.query(TestCase).filter(
+            TestCase.id == testcase_id,
+            TestCase.owner_id == current_user.id
+        ).first()
+        if tc:
+            tc.sort_order = idx
+    db.commit()
+    return {"message": "排序更新成功"}
 
 
 @router.get("/{testcase_id}", response_model=TestCaseResponse, summary="获取用例详情")

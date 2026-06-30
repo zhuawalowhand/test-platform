@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from ..database import get_db
-from ..models import TestCase, TestResult, TestReport, User
+from ..models import TestCase, TestResult, TestReport, User, Environment
 from ..schemas import ExecuteRequest, TestReportResponse, TestReportDetail, TestResultResponse
 from ..auth import get_current_user
 from ..executor import execute_single_testcase
@@ -20,27 +20,34 @@ async def execute_tests(
     """
     执行测试用例并生成报告
     - 不传 testcase_ids 则执行当前用户的所有用例
+    - 可指定 environment_id 使用特定环境配置
     - 返回完整的测试报告（包含每条用例的执行结果）
     """
-    # DEBUG
-    print(f"[DEBUG] current_user.id = {current_user.id}")
-    print(f"[DEBUG] request.testcase_ids = {request.testcase_ids}")
-
-    # 获取要执行的用例
+    # 获取要执行的用例（按 sort_order 排序）
     query = db.query(TestCase).filter(TestCase.owner_id == current_user.id)
     if request.testcase_ids:
         query = query.filter(TestCase.id.in_(request.testcase_ids))
-    testcases = query.all()
-
-    print(f"[DEBUG] found testcases count = {len(testcases)}")
+    testcases = query.order_by(TestCase.sort_order.asc(), TestCase.id.asc()).all()
 
     if not testcases:
-        raise HTTPException(status_code=404, detail=f"没有找到可执行的用例 (user_id={current_user.id})")
+        raise HTTPException(status_code=404, detail="没有找到可执行的用例")
+
+    # 获取环境配置
+    environment = None
+    env_name = None
+    if request.environment_id:
+        environment = db.query(Environment).filter(
+            Environment.id == request.environment_id,
+            Environment.owner_id == current_user.id
+        ).first()
+        if environment:
+            env_name = environment.name
 
     # 创建报告
     report = TestReport(
         name=request.name or f"测试报告 #{db.query(TestReport).count() + 1}",
         total=len(testcases),
+        environment=env_name,
         owner_id=current_user.id
     )
     db.add(report)
@@ -51,10 +58,9 @@ async def execute_tests(
     passed_count = 0
     failed_count = 0
     total_duration = 0
-    results = []
 
     for testcase in testcases:
-        result_data = await execute_single_testcase(testcase)
+        result_data = await execute_single_testcase(testcase, environment)
 
         test_result = TestResult(
             testcase_id=testcase.id,
@@ -64,7 +70,8 @@ async def execute_tests(
             expected_status=testcase.expected_status,
             response_body=result_data["response_body"],
             duration_ms=result_data["duration_ms"],
-            error_message=result_data["error_message"]
+            error_message=result_data["error_message"],
+            assertion_results=result_data.get("assertion_results")
         )
         db.add(test_result)
 
@@ -94,6 +101,7 @@ async def execute_tests(
         "failed": report.failed,
         "duration_ms": report.duration_ms,
         "pass_rate": round(pass_rate, 2),
+        "environment": report.environment,
         "created_at": report.created_at,
         "results": result_records
     }
@@ -122,6 +130,7 @@ def list_reports(
             "failed": r.failed,
             "duration_ms": r.duration_ms,
             "pass_rate": round(pass_rate, 2),
+            "environment": r.environment,
             "created_at": r.created_at
         })
     return result
@@ -152,6 +161,44 @@ def get_report(
         "failed": report.failed,
         "duration_ms": report.duration_ms,
         "pass_rate": round(pass_rate, 2),
+        "environment": report.environment,
         "created_at": report.created_at,
         "results": results
+    }
+
+
+@router.get("/stats/summary", summary="统计数据")
+def get_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """获取平台统计数据"""
+    total_cases = db.query(TestCase).filter(TestCase.owner_id == current_user.id).count()
+    total_reports = db.query(TestReport).filter(TestReport.owner_id == current_user.id).count()
+
+    # 最近10次报告的平均通过率
+    recent_reports = db.query(TestReport).filter(
+        TestReport.owner_id == current_user.id
+    ).order_by(TestReport.created_at.desc()).limit(10).all()
+
+    avg_pass_rate = 0
+    if recent_reports:
+        avg_pass_rate = sum(
+            (r.passed / r.total * 100) if r.total > 0 else 0
+            for r in recent_reports
+        ) / len(recent_reports)
+
+    # 今日执行次数
+    from datetime import datetime, date
+    today = date.today()
+    today_executions = db.query(TestReport).filter(
+        TestReport.owner_id == current_user.id,
+        TestReport.created_at >= datetime.combine(today, datetime.min.time())
+    ).count()
+
+    return {
+        "total_cases": total_cases,
+        "total_reports": total_reports,
+        "avg_pass_rate": round(avg_pass_rate, 2),
+        "today_executions": today_executions
     }
