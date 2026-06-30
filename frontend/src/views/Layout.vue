@@ -60,30 +60,13 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { userApi } from '../api'
+import { useTheme } from '../composables/useTheme'
 import { Sunny, Moon } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
 const username = ref('')
-const isDark = ref(localStorage.getItem('theme') === 'dark')
-
-// 初始化主题
-onMounted(() => {
-  if (isDark.value) {
-    document.documentElement.classList.add('dark')
-  }
-})
-
-const toggleTheme = () => {
-  isDark.value = !isDark.value
-  if (isDark.value) {
-    document.documentElement.classList.add('dark')
-    localStorage.setItem('theme', 'dark')
-  } else {
-    document.documentElement.classList.remove('dark')
-    localStorage.setItem('theme', 'light')
-  }
-}
+const { isDark, toggleTheme } = useTheme()
 
 onMounted(async () => {
   try {

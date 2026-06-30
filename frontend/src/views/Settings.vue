@@ -54,11 +54,12 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { userApi } from '../api'
+import { useTheme } from '../composables/useTheme'
 
 const formRef = ref()
 const saving = ref(false)
 const user = ref({})
-const isDark = ref(localStorage.getItem('theme') === 'dark')
+const { isDark, toggleTheme } = useTheme()
 
 const form = reactive({
   email: '',
@@ -101,16 +102,5 @@ const handleSave = async () => {
 const handleReset = () => {
   form.email = user.value.email
   form.password = ''
-}
-
-const toggleTheme = () => {
-  isDark.value = !isDark.value
-  if (isDark.value) {
-    document.documentElement.classList.add('dark')
-    localStorage.setItem('theme', 'dark')
-  } else {
-    document.documentElement.classList.remove('dark')
-    localStorage.setItem('theme', 'light')
-  }
 }
 </script>
