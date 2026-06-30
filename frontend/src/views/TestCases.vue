@@ -204,11 +204,13 @@ const loadTestcases = async () => {
   loading.value = true
   try {
     testcases.value = await testcaseApi.list()
-    await nextTick()
-    initSortable()
   } finally {
     loading.value = false
   }
+  // loading 变 false 后表格才渲染到 DOM，等两个 tick 确保完成
+  await nextTick()
+  await nextTick()
+  initSortable()
 }
 
 let sortableInstance = null
@@ -218,20 +220,29 @@ const initSortable = () => {
     sortableInstance.destroy()
     sortableInstance = null
   }
-  const tbody = document.querySelector('.el-table__body-wrapper tbody')
-  if (!tbody) return
+  // 获取当前 SkeletonTable 内部的主 tbody（排除 fixed 列的 tbody）
+  const wrapper = document.querySelector('.el-table__body-wrapper')
+  if (!wrapper) {
+    console.warn('[拖拽] 未找到表格 body wrapper')
+    return
+  }
+  const tbody = wrapper.querySelector('tbody')
+  if (!tbody) {
+    console.warn('[拖拽] 未找到 tbody 元素')
+    return
+  }
   sortableInstance = Sortable.create(tbody, {
     handle: '.drag-handle',
     animation: 150,
     ghostClass: 'sortable-ghost',
+    fallbackClass: 'sortable-ghost',
+    forceFallback: true,
     onEnd: async ({ oldIndex, newIndex }) => {
       if (oldIndex === newIndex) return
-      // 在 filteredTestcases 中重排（需要操作原始 testcases 数组）
       const list = [...testcases.value]
       const [moved] = list.splice(oldIndex, 1)
       list.splice(newIndex, 0, moved)
       testcases.value = list
-      // 调用后端保存顺序
       const order = list.map(tc => tc.id)
       try {
         await testcaseApi.reorder(order)
