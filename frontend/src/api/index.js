@@ -40,7 +40,8 @@ api.interceptors.response.use(
 export const userApi = {
   login: (data) => api.post('/users/login', data),
   register: (data) => api.post('/users/register', data),
-  getMe: () => api.get('/users/me')
+  getMe: () => api.get('/users/me'),
+  update: (data) => api.put('/users/me', data)
 }
 
 // 用例相关
@@ -49,14 +50,36 @@ export const testcaseApi = {
   get: (id) => api.get(`/testcases/${id}`),
   create: (data) => api.post('/testcases/', data),
   update: (id, data) => api.put(`/testcases/${id}`, data),
-  delete: (id) => api.delete(`/testcases/${id}`)
+  delete: (id) => api.delete(`/testcases/${id}`),
+  tags: () => api.get('/testcases/tags'),
+  reorder: (order) => api.post('/testcases/reorder', order)
 }
 
 // 执行相关
 export const executeApi = {
   run: (data) => api.post('/execute/', data),
   reports: (params) => api.get('/execute/reports', { params }),
-  reportDetail: (id) => api.get(`/execute/reports/${id}`)
+  reportDetail: (id) => api.get(`/execute/reports/${id}`),
+  stats: () => api.get('/execute/stats/summary')
+}
+
+// 环境相关
+export const environmentApi = {
+  list: () => api.get('/environments/'),
+  get: (id) => api.get(`/environments/${id}`),
+  create: (data) => api.post('/environments/', data),
+  update: (id, data) => api.put(`/environments/${id}`, data),
+  delete: (id) => api.delete(`/environments/${id}`)
+}
+
+// 定时任务
+export const scheduleApi = {
+  list: () => api.get('/schedules/'),
+  get: (id) => api.get(`/schedules/${id}`),
+  create: (data) => api.post('/schedules/', data),
+  update: (id, data) => api.put(`/schedules/${id}`, data),
+  delete: (id) => api.delete(`/schedules/${id}`),
+  toggle: (id) => api.patch(`/schedules/${id}/toggle`)
 }
 
 export default api

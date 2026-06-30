@@ -23,6 +23,14 @@
           <el-icon><DataAnalysis /></el-icon>
           <span>测试报告</span>
         </el-menu-item>
+        <el-menu-item index="/environments">
+          <el-icon><Setting /></el-icon>
+          <span>环境管理</span>
+        </el-menu-item>
+        <el-menu-item index="/schedules">
+          <el-icon><Timer /></el-icon>
+          <span>定时任务</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
 

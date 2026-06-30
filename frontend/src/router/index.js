@@ -29,6 +29,18 @@ const routes = [
         name: 'Reports',
         component: () => import('../views/Reports.vue'),
         meta: { title: '测试报告' }
+      },
+      {
+        path: 'environments',
+        name: 'Environments',
+        component: () => import('../views/Environments.vue'),
+        meta: { title: '环境管理' }
+      },
+      {
+        path: 'schedules',
+        name: 'Schedules',
+        component: () => import('../views/Schedules.vue'),
+        meta: { title: '定时任务' }
       }
     ]
   }
@@ -39,7 +51,6 @@ const router = createRouter({
   routes
 })
 
-// 路由守卫
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
   if (to.path !== '/login' && !token) {
