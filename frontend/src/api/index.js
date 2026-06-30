@@ -21,8 +21,9 @@ api.interceptors.response.use(
   response => response.data,
   error => {
     if (error.response) {
-      const { status, data } = error.response
-      if (status === 401 || status === 403) {
+      const { status, data, config } = error.response
+      const isAuthRequest = config?.url?.includes('/users/login') || config?.url?.includes('/users/register')
+      if ((status === 401 || status === 403) && !isAuthRequest) {
         localStorage.removeItem('token')
         router.push('/login')
         ElMessage.error('登录已过期，请重新登录')
