@@ -47,6 +47,7 @@
     <SkeletonTable :loading="loading" :rows="5" :cols="7">
       <el-table
         :data="filteredTestcases"
+        row-key="id"
         border
         @selection-change="handleSelectionChange"
       >
@@ -237,12 +238,21 @@ const initSortable = () => {
     ghostClass: 'sortable-ghost',
     fallbackClass: 'sortable-ghost',
     forceFallback: true,
-    onEnd: async ({ oldIndex, newIndex }) => {
+    onEnd: async ({ oldIndex, newIndex, item }) => {
       if (oldIndex === newIndex) return
+      // 1. 先撤销 Sortable 对 DOM 的物理移动，避免和 Vue 冲突
+      const parent = item.parentNode
+      if (oldIndex < newIndex) {
+        parent.insertBefore(item, parent.children[newIndex + 1] || null)
+      } else {
+        parent.insertBefore(item, parent.children[newIndex])
+      }
+      // 2. 通过 Vue 响应式更新数据顺序
       const list = [...testcases.value]
       const [moved] = list.splice(oldIndex, 1)
       list.splice(newIndex, 0, moved)
       testcases.value = list
+      // 3. 调用后端保存顺序
       const order = list.map(tc => tc.id)
       try {
         await testcaseApi.reorder(order)
@@ -250,6 +260,9 @@ const initSortable = () => {
       } catch {
         ElMessage.error('排序保存失败')
       }
+      // 4. 重新绑定 Sortable（因为 DOM 已被 Vue 重新渲染）
+      await nextTick()
+      initSortable()
     }
   })
 }
