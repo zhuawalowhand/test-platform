@@ -118,15 +118,7 @@
           <div class="form-tip">多个标签用逗号分隔，可用于筛选和分组</div>
         </el-form-item>
         <el-form-item label="高级断言">
-          <el-input
-            v-model="form.assertions"
-            type="textarea"
-            :rows="4"
-            placeholder='[{"type":"body_contains","target":"","expected":"成功"},{"type":"response_time","target":"","expected":3000,"operator":"<"}]'
-          />
-          <div class="form-tip">
-            JSON 数组，支持: body_contains, body_json, header, response_time, body_regex
-          </div>
+          <AssertionEditor v-model="form.assertions" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -152,6 +144,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { testcaseApi, executeApi } from '../api'
 import { useRouter } from 'vue-router'
 import SkeletonTable from '../components/SkeletonTable.vue'
+import AssertionEditor from '../components/AssertionEditor.vue'
 
 const router = useRouter()
 const testcases = ref([])
