@@ -37,6 +37,9 @@
     <el-container>
       <el-header>
         <div class="header-right">
+          <el-button @click="toggleTheme" :icon="isDark ? 'Sunny' : 'Moon'" circle size="small">
+            {{ isDark ? '☀️' : '🌙' }}
+          </el-button>
           <span>{{ username }}</span>
           <el-button type="danger" text @click="handleLogout">退出</el-button>
         </div>
@@ -57,6 +60,25 @@ import { userApi } from '../api'
 const route = useRoute()
 const router = useRouter()
 const username = ref('')
+const isDark = ref(localStorage.getItem('theme') === 'dark')
+
+// 初始化主题
+onMounted(() => {
+  if (isDark.value) {
+    document.documentElement.classList.add('dark')
+  }
+})
+
+const toggleTheme = () => {
+  isDark.value = !isDark.value
+  if (isDark.value) {
+    document.documentElement.classList.add('dark')
+    localStorage.setItem('theme', 'dark')
+  } else {
+    document.documentElement.classList.remove('dark')
+    localStorage.setItem('theme', 'light')
+  }
+}
 
 onMounted(async () => {
   try {
@@ -95,8 +117,8 @@ const handleLogout = () => {
 }
 
 .el-header {
-  background-color: #fff;
-  border-bottom: 1px solid #eee;
+  background-color: var(--header-bg, #fff);
+  border-bottom: 1px solid var(--border-color, #eee);
   display: flex;
   align-items: center;
   justify-content: flex-end;

@@ -84,16 +84,29 @@
         </el-card>
       </el-col>
     </el-row>
+
+    <el-row :gutter="20" style="margin-top: 20px">
+      <el-col :span="24">
+        <el-card>
+          <template #header>
+            <span>通过率趋势（最近 10 次）</span>
+          </template>
+          <div ref="chartRef" style="height: 300px"></div>
+        </el-card>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { testcaseApi, executeApi } from '../api'
+import * as echarts from 'echarts'
 
 const router = useRouter()
+const chartRef = ref()
 
 const stats = reactive({
   totalCases: 0,
@@ -103,6 +116,7 @@ const stats = reactive({
 })
 
 const recentReports = ref([])
+const allReports = ref([])
 
 const formatTime = (time) => {
   return new Date(time).toLocaleString('zh-CN')
@@ -112,11 +126,12 @@ const loadStats = async () => {
   try {
     const [cases, reports] = await Promise.all([
       testcaseApi.list(),
-      executeApi.reports({ limit: 10 })
+      executeApi.reports({ limit: 50 })
     ])
 
     stats.totalCases = cases.length
     stats.totalReports = reports.length
+    allReports.value = reports
 
     if (reports.length > 0) {
       const avgRate = reports.reduce((sum, r) => sum + r.pass_rate, 0) / reports.length
@@ -129,9 +144,65 @@ const loadStats = async () => {
     }
 
     recentReports.value = reports.slice(0, 5)
+
+    // 渲染图表
+    await nextTick()
+    renderChart()
   } catch (e) {
     console.error('加载统计失败:', e)
   }
+}
+
+const renderChart = () => {
+  if (!chartRef.value) return
+
+  const chart = echarts.init(chartRef.value)
+  const reports = [...allReports.value].reverse() // 时间正序
+
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'cross' }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: reports.map(r => {
+        const d = new Date(r.created_at)
+        return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`
+      }),
+      axisLabel: { rotate: 45, fontSize: 10 }
+    },
+    yAxis: {
+      type: 'value',
+      min: 0,
+      max: 100,
+      axisLabel: { formatter: '{value}%' }
+    },
+    series: [
+      {
+        name: '通过率',
+        type: 'line',
+        data: reports.map(r => r.pass_rate),
+        smooth: true,
+        itemStyle: { color: '#409eff' },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(64, 158, 255, 0.3)' },
+            { offset: 1, color: 'rgba(64, 158, 255, 0.05)' }
+          ])
+        }
+      }
+    ]
+  }
+
+  chart.setOption(option)
+  window.addEventListener('resize', () => chart.resize())
 }
 
 onMounted(loadStats)
@@ -145,6 +216,8 @@ const quickExecute = async () => {
     const res = await executeApi.run({ name: '快速执行' })
     ElMessage.success(`执行完成：通过 ${res.passed}/${res.total}`)
     router.push('/reports')
+    // 刷新图表
+    setTimeout(loadStats, 1000)
   } catch (e) {
     // error handled by interceptor
   }
@@ -160,9 +233,11 @@ const quickExecute = async () => {
   display: flex;
   flex-direction: column;
   gap: 15px;
+  padding: 10px 0;
 }
 
 .quick-actions .el-button {
   width: 100%;
+  margin-left: 0;
 }
 </style>

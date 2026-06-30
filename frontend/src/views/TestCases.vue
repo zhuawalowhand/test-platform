@@ -61,11 +61,13 @@
       </el-table-column>
       <el-table-column prop="url" label="URL" show-overflow-tooltip />
       <el-table-column prop="expected_status" label="预期" width="70" />
-      <el-table-column label="操作" width="180" fixed="right">
+      <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
-          <el-button size="small" @click="handleEdit(row)">编辑</el-button>
-          <el-button size="small" type="success" @click="handleExecuteOne(row)">执行</el-button>
-          <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+          <div style="display: flex; gap: 4px; flex-wrap: nowrap;">
+            <el-button size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-button size="small" type="success" @click="handleExecuteOne(row)">执行</el-button>
+            <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -105,6 +107,21 @@
         </el-form-item>
         <el-form-item label="预期状态码" prop="expected_status">
           <el-input-number v-model="form.expected_status" :min="100" :max="599" />
+        </el-form-item>
+        <el-form-item label="标签">
+          <el-input v-model="form.tags" placeholder="逗号分隔，如: smoke,regression" />
+          <div class="form-tip">多个标签用逗号分隔，可用于筛选和分组</div>
+        </el-form-item>
+        <el-form-item label="高级断言">
+          <el-input
+            v-model="form.assertions"
+            type="textarea"
+            :rows="4"
+            placeholder='[{"type":"body_contains","target":"","expected":"成功"},{"type":"response_time","target":"","expected":3000,"operator":"<"}]'
+          />
+          <div class="form-tip">
+            JSON 数组，支持: body_contains, body_json, header, response_time, body_regex
+          </div>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -152,7 +169,9 @@ const form = reactive({
   url: '',
   headers: '{}',
   body: '{}',
-  expected_status: 200
+  expected_status: 200,
+  tags: '',
+  assertions: ''
 })
 
 const rules = {
@@ -196,7 +215,8 @@ const handleCreate = () => {
   editId.value = null
   Object.assign(form, {
     name: '', description: '', method: 'GET', url: '',
-    headers: '{}', body: '{}', expected_status: 200
+    headers: '{}', body: '{}', expected_status: 200,
+    tags: '', assertions: ''
   })
   showDialog.value = true
 }
@@ -211,7 +231,9 @@ const handleEdit = (row) => {
     url: row.url,
     headers: row.headers || '{}',
     body: row.body || '{}',
-    expected_status: row.expected_status
+    expected_status: row.expected_status,
+    tags: row.tags || '',
+    assertions: row.assertions || ''
   })
   showDialog.value = true
 }
@@ -386,5 +408,11 @@ const handleFileImport = async (event) => {
   padding: 10px;
   background: #f5f7fa;
   border-radius: 4px;
+}
+
+.form-tip {
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
 }
 </style>

@@ -39,7 +39,7 @@
             :rows="6"
             placeholder='{"token": "xxx", "user_id": "123"}'
           />
-          <div class="form-tip">JSON 格式，用例中用 {{'{{'}}变量名{{'}}'}} 引用</div>
+          <div class="form-tip">JSON 格式，用例中用 &#123;&#123;变量名&#125;&#125; 引用</div>
         </el-form-item>
       </el-form>
       <template #footer>
