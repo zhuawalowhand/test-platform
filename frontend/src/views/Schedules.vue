@@ -2,9 +2,14 @@
   <div>
     <div class="page-header">
       <h2>定时任务</h2>
-      <el-button type="primary" @click="handleCreate">
-        <el-icon><Plus /></el-icon>新建任务
-      </el-button>
+      <div style="display: flex; gap: 10px; align-items: center">
+        <el-tag :type="schedulerRunning ? 'success' : 'info'" size="small">
+          调度器：{{ schedulerRunning ? '运行中' : '未启动' }}（{{ jobCount }} 个任务）
+        </el-tag>
+        <el-button type="primary" @click="handleCreate">
+          <el-icon><Plus /></el-icon>新建任务
+        </el-button>
+      </div>
     </div>
 
     <SkeletonTable :loading="loading" :rows="5" :cols="7">
@@ -34,6 +39,14 @@
       <el-table-column prop="last_run" label="上次执行" width="180">
         <template #default="{ row }">
           {{ row.last_run ? formatTime(row.last_run) : '从未执行' }}
+        </template>
+      </el-table-column>
+      <el-table-column label="下次执行" width="180">
+        <template #default="{ row }">
+          <span v-if="row.enabled && nextRunMap[row.id]">
+            {{ formatTime(nextRunMap[row.id]) }}
+          </span>
+          <span v-else style="color: #999">—</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" width="260">
@@ -111,6 +124,9 @@ const showDialog = ref(false)
 const saving = ref(false)
 const testingWebhook = ref(false)
 const runningId = ref(null)
+const schedulerRunning = ref(false)
+const jobCount = ref(0)
+const nextRunMap = ref({})
 const isEdit = ref(false)
 const editId = ref(null)
 const formRef = ref()
@@ -150,8 +166,30 @@ const loadSchedules = async () => {
     schedules.value = s
     environments.value = e
     testcases.value = t
+    // 加载调度器状态
+    await loadSchedulerStatus()
   } finally {
     loading.value = false
+  }
+}
+
+const loadSchedulerStatus = async () => {
+  try {
+    const status = await scheduleApi.schedulerStatus()
+    schedulerRunning.value = status.running
+    jobCount.value = status.job_count
+    // 构建 task_id → next_run 映射
+    const map = {}
+    for (const job of status.jobs || []) {
+      // job id 格式: "scheduled_task_{id}"
+      const match = job.id.match(/^scheduled_task_(\d+)$/)
+      if (match && job.next_run) {
+        map[Number(match[1])] = job.next_run
+      }
+    }
+    nextRunMap.value = map
+  } catch {
+    // 调度器接口不可用时忽略
   }
 }
 

@@ -10,6 +10,7 @@ from ..schemas import ScheduledTaskCreate, ScheduledTaskUpdate, ScheduledTaskRes
 from ..auth import get_current_user
 from ..executor import execute_single_testcase
 from ..webhook import send_webhook_notification
+from ..scheduler import add_job, remove_job
 
 router = APIRouter(prefix="/api/schedules", tags=["定时任务"])
 
@@ -33,6 +34,8 @@ def create_schedule(
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
+    # 注册到调度器
+    add_job(db_task.id, db_task.cron_expression)
     return db_task
 
 
@@ -84,6 +87,11 @@ def update_schedule(
 
     db.commit()
     db.refresh(db_task)
+    # 同步调度器：启用则注册，禁用则移除
+    if db_task.enabled:
+        add_job(db_task.id, db_task.cron_expression)
+    else:
+        remove_job(db_task.id)
     return db_task
 
 
@@ -103,6 +111,8 @@ def delete_schedule(
 
     db.delete(db_task)
     db.commit()
+    # 从调度器移除
+    remove_job(task_id)
     return {"message": "删除成功"}
 
 
@@ -123,6 +133,11 @@ def toggle_schedule(
     db_task.enabled = not db_task.enabled
     db.commit()
     db.refresh(db_task)
+    # 同步调度器
+    if db_task.enabled:
+        add_job(db_task.id, db_task.cron_expression)
+    else:
+        remove_job(db_task.id)
     return db_task
 
 

@@ -81,7 +81,8 @@ export const scheduleApi = {
   update: (id, data) => api.put(`/schedules/${id}`, data),
   delete: (id) => api.delete(`/schedules/${id}`),
   toggle: (id) => api.patch(`/schedules/${id}/toggle`),
-  run: (id) => api.post(`/schedules/${id}/run`)
+  run: (id) => api.post(`/schedules/${id}/run`),
+  schedulerStatus: () => api.get('/scheduler/status')
 }
 
 export default api
