@@ -51,6 +51,11 @@
         @selection-change="handleSelectionChange"
       >
       <el-table-column type="selection" width="50" />
+      <el-table-column width="50" align="center">
+        <template #default>
+          <el-icon class="drag-handle" style="cursor: grab; color: #c0c4cc; font-size: 16px"><Rank /></el-icon>
+        </template>
+      </el-table-column>
       <el-table-column prop="id" label="ID" width="60" />
       <el-table-column prop="name" label="用例名称">
         <template #default="{ row }">
@@ -139,12 +144,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { testcaseApi, executeApi } from '../api'
 import { useRouter } from 'vue-router'
 import SkeletonTable from '../components/SkeletonTable.vue'
 import AssertionEditor from '../components/AssertionEditor.vue'
+import Sortable from 'sortablejs'
 
 const router = useRouter()
 const testcases = ref([])
@@ -198,9 +204,43 @@ const loadTestcases = async () => {
   loading.value = true
   try {
     testcases.value = await testcaseApi.list()
+    await nextTick()
+    initSortable()
   } finally {
     loading.value = false
   }
+}
+
+let sortableInstance = null
+
+const initSortable = () => {
+  if (sortableInstance) {
+    sortableInstance.destroy()
+    sortableInstance = null
+  }
+  const tbody = document.querySelector('.el-table__body-wrapper tbody')
+  if (!tbody) return
+  sortableInstance = Sortable.create(tbody, {
+    handle: '.drag-handle',
+    animation: 150,
+    ghostClass: 'sortable-ghost',
+    onEnd: async ({ oldIndex, newIndex }) => {
+      if (oldIndex === newIndex) return
+      // 在 filteredTestcases 中重排（需要操作原始 testcases 数组）
+      const list = [...testcases.value]
+      const [moved] = list.splice(oldIndex, 1)
+      list.splice(newIndex, 0, moved)
+      testcases.value = list
+      // 调用后端保存顺序
+      const order = list.map(tc => tc.id)
+      try {
+        await testcaseApi.reorder(order)
+        ElMessage.success('排序已保存')
+      } catch {
+        ElMessage.error('排序保存失败')
+      }
+    }
+  })
 }
 
 onMounted(loadTestcases)
@@ -413,5 +453,14 @@ const handleFileImport = async (event) => {
   font-size: 12px;
   color: #999;
   margin-top: 4px;
+}
+
+.sortable-ghost {
+  opacity: 0.4;
+  background: #e8f4ff !important;
+}
+
+html.dark .sortable-ghost {
+  background: #1e3a5f !important;
 }
 </style>
