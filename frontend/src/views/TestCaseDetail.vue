@@ -58,7 +58,8 @@
             </div>
           </template>
 
-          <el-table :data="filteredHistory" v-loading="loading" border>
+          <SkeletonTable :loading="loading" :rows="5" :cols="7">
+            <el-table :data="filteredHistory" border>
             <el-table-column label="结果" width="80">
               <template #default="{ row }">
                 <el-tag :type="row.passed ? 'success' : 'danger'" size="small">
@@ -88,7 +89,8 @@
                 {{ row.error_message || '-' }}
               </template>
             </el-table-column>
-          </el-table>
+            </el-table>
+          </SkeletonTable>
 
           <el-empty v-if="!loading && filteredHistory.length === 0" description="暂无执行记录" />
         </el-card>
@@ -102,6 +104,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { testcaseApi, executeApi } from '../api'
+import SkeletonTable from '../components/SkeletonTable.vue'
 
 const route = useRoute()
 const router = useRouter()

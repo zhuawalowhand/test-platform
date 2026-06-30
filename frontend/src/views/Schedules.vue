@@ -7,7 +7,8 @@
       </el-button>
     </div>
 
-    <el-table :data="schedules" v-loading="loading" border>
+    <SkeletonTable :loading="loading" :rows="5" :cols="7">
+      <el-table :data="schedules" border>
       <el-table-column prop="id" label="ID" width="60" />
       <el-table-column prop="name" label="任务名称" />
       <el-table-column prop="cron_expression" label="Cron 表达式" width="150">
@@ -41,7 +42,8 @@
           <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
-    </el-table>
+      </el-table>
+    </SkeletonTable>
 
     <el-dialog v-model="showDialog" :title="isEdit ? '编辑任务' : '新建任务'" width="600px">
       <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
@@ -90,6 +92,7 @@
 import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { scheduleApi, environmentApi, testcaseApi } from '../api'
+import SkeletonTable from '../components/SkeletonTable.vue'
 
 const schedules = ref([])
 const environments = ref([])

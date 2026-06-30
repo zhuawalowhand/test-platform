@@ -2,6 +2,7 @@
   <div>
     <h2 style="margin-bottom: 20px">数据概览</h2>
 
+    <SkeletonTable :loading="loading" :rows="2" :cols="4">
     <el-row :gutter="20" class="stats-row">
       <el-col :span="6">
         <el-card shadow="hover">
@@ -40,6 +41,7 @@
         </el-card>
       </el-col>
     </el-row>
+    </SkeletonTable>
 
     <el-row :gutter="20" style="margin-top: 20px">
       <el-col :span="12">
@@ -47,6 +49,7 @@
           <template #header>
             <span>最近报告</span>
           </template>
+          <SkeletonTable :loading="loading" :rows="5" :cols="3">
           <el-table :data="recentReports" size="small" @row-click="goReport">
             <el-table-column prop="name" label="名称" />
             <el-table-column prop="pass_rate" label="通过率" width="100">
@@ -62,6 +65,7 @@
               </template>
             </el-table-column>
           </el-table>
+          </SkeletonTable>
         </el-card>
       </el-col>
 
@@ -104,9 +108,11 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { testcaseApi, executeApi } from '../api'
 import * as echarts from 'echarts'
+import SkeletonTable from '../components/SkeletonTable.vue'
 
 const router = useRouter()
 const chartRef = ref()
+const loading = ref(false)
 
 const stats = reactive({
   totalCases: 0,
@@ -123,6 +129,7 @@ const formatTime = (time) => {
 }
 
 const loadStats = async () => {
+  loading.value = true
   try {
     const [cases, reports] = await Promise.all([
       testcaseApi.list(),
@@ -150,6 +157,8 @@ const loadStats = async () => {
     renderChart()
   } catch (e) {
     console.error('加载统计失败:', e)
+  } finally {
+    loading.value = false
   }
 }
 

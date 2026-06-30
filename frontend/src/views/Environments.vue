@@ -7,7 +7,8 @@
       </el-button>
     </div>
 
-    <el-table :data="environments" v-loading="loading" border>
+    <SkeletonTable :loading="loading" :rows="5" :cols="5">
+      <el-table :data="environments" border>
       <el-table-column prop="id" label="ID" width="60" />
       <el-table-column prop="name" label="环境名称" width="150" />
       <el-table-column prop="base_url" label="基础 URL" />
@@ -22,7 +23,8 @@
           <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
-    </el-table>
+      </el-table>
+    </SkeletonTable>
 
     <el-dialog v-model="showDialog" :title="isEdit ? '编辑环境' : '新建环境'" width="600px">
       <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
@@ -54,6 +56,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { environmentApi } from '../api'
+import SkeletonTable from '../components/SkeletonTable.vue'
 
 const environments = ref([])
 const loading = ref(false)

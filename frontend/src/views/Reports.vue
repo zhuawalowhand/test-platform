@@ -4,7 +4,8 @@
       <h2>测试报告</h2>
     </div>
 
-    <el-table :data="reports" v-loading="loading" border @row-click="showDetail">
+    <SkeletonTable :loading="loading" :rows="5" :cols="7">
+      <el-table :data="reports" border @row-click="showDetail">
       <el-table-column prop="id" label="ID" width="60" />
       <el-table-column prop="name" label="报告名称" />
       <el-table-column prop="total" label="总数" width="80" />
@@ -32,7 +33,8 @@
           {{ formatTime(row.created_at) }}
         </template>
       </el-table-column>
-    </el-table>
+      </el-table>
+    </SkeletonTable>
 
     <!-- 报告详情弹窗 -->
     <el-dialog v-model="showDialog" :title="reportDetail?.name" width="900px">
@@ -74,6 +76,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { executeApi } from '../api'
+import SkeletonTable from '../components/SkeletonTable.vue'
 
 const reports = ref([])
 const loading = ref(false)

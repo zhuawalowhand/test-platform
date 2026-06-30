@@ -44,12 +44,12 @@
       </div>
     </div>
 
-    <el-table
-      :data="filteredTestcases"
-      v-loading="loading"
-      border
-      @selection-change="handleSelectionChange"
-    >
+    <SkeletonTable :loading="loading" :rows="5" :cols="7">
+      <el-table
+        :data="filteredTestcases"
+        border
+        @selection-change="handleSelectionChange"
+      >
       <el-table-column type="selection" width="50" />
       <el-table-column prop="id" label="ID" width="60" />
       <el-table-column prop="name" label="用例名称">
@@ -74,7 +74,8 @@
           </div>
         </template>
       </el-table-column>
-    </el-table>
+      </el-table>
+    </SkeletonTable>
 
     <div class="table-footer" v-if="filteredTestcases.length > 0">
       <span>共 {{ filteredTestcases.length }} 条，已选 {{ selectedIds.length }} 条</span>
@@ -150,6 +151,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { testcaseApi, executeApi } from '../api'
 import { useRouter } from 'vue-router'
+import SkeletonTable from '../components/SkeletonTable.vue'
 
 const router = useRouter()
 const testcases = ref([])
