@@ -97,6 +97,7 @@ class ExecuteRequest(BaseModel):
     )
     name: Optional[str] = Field(None, description="报告名称", examples=["回归测试 v1.0"])
     environment_id: Optional[int] = Field(None, description="环境ID")
+    webhook_url: Optional[str] = Field(None, description="Webhook 通知地址（钉钉/飞书/企微/Slack）")
 
 
 class TestResultResponse(BaseModel):

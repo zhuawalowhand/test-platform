@@ -60,7 +60,8 @@ export const executeApi = {
   run: (data) => api.post('/execute/', data),
   reports: (params) => api.get('/execute/reports', { params }),
   reportDetail: (id) => api.get(`/execute/reports/${id}`),
-  stats: () => api.get('/execute/stats/summary')
+  stats: () => api.get('/execute/stats/summary'),
+  testWebhook: (webhookUrl) => api.post('/execute/webhook/test', null, { params: { webhook_url: webhookUrl } })
 }
 
 // 环境相关
@@ -79,7 +80,8 @@ export const scheduleApi = {
   create: (data) => api.post('/schedules/', data),
   update: (id, data) => api.put(`/schedules/${id}`, data),
   delete: (id) => api.delete(`/schedules/${id}`),
-  toggle: (id) => api.patch(`/schedules/${id}/toggle`)
+  toggle: (id) => api.patch(`/schedules/${id}/toggle`),
+  run: (id) => api.post(`/schedules/${id}/run`)
 }
 
 export default api

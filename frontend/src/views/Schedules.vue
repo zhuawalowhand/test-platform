@@ -36,8 +36,9 @@
           {{ row.last_run ? formatTime(row.last_run) : '从未执行' }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="180">
+      <el-table-column label="操作" width="260">
         <template #default="{ row }">
+          <el-button size="small" type="success" @click="handleRun(row)" :loading="runningId === row.id">执行</el-button>
           <el-button size="small" @click="handleEdit(row)">编辑</el-button>
           <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
         </template>
@@ -77,7 +78,15 @@
           </el-select>
         </el-form-item>
         <el-form-item label="Webhook">
-          <el-input v-model="form.webhook_url" placeholder="钉钉/飞书 Webhook URL（可选）" />
+          <div style="display: flex; gap: 8px; width: 100%">
+            <el-input v-model="form.webhook_url" placeholder="钉钉/飞书/企微/Slack Webhook URL（可选）" />
+            <el-button @click="handleTestWebhook" :loading="testingWebhook" :disabled="!form.webhook_url">
+              测试
+            </el-button>
+          </div>
+          <div class="form-tip">
+            支持：钉钉机器人、飞书机器人、企业微信群机器人、Slack Incoming Webhooks
+          </div>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -100,6 +109,8 @@ const testcases = ref([])
 const loading = ref(false)
 const showDialog = ref(false)
 const saving = ref(false)
+const testingWebhook = ref(false)
+const runningId = ref(null)
 const isEdit = ref(false)
 const editId = ref(null)
 const formRef = ref()
@@ -200,6 +211,42 @@ const handleDelete = async (row) => {
   await scheduleApi.delete(row.id)
   ElMessage.success('删除成功')
   loadSchedules()
+}
+
+const handleRun = async (row) => {
+  runningId.value = row.id
+  try {
+    const res = await scheduleApi.run(row.id)
+    ElMessage.success(`执行完成：通过 ${res.passed}/${res.total}，通过率 ${res.pass_rate}%`)
+    if (res.webhook_sent) {
+      ElMessage.info('Webhook 通知已发送')
+    }
+    loadSchedules()
+  } catch (e) {
+    // error handled by interceptor
+  } finally {
+    runningId.value = null
+  }
+}
+
+const handleTestWebhook = async () => {
+  if (!form.webhook_url) {
+    ElMessage.warning('请先输入 Webhook URL')
+    return
+  }
+  testingWebhook.value = true
+  try {
+    const res = await executeApi.testWebhook(form.webhook_url)
+    if (res.success) {
+      ElMessage.success(res.message || '通知发送成功，请检查对应平台')
+    } else {
+      ElMessage.error(res.message || '通知发送失败')
+    }
+  } catch (e) {
+    ElMessage.error('测试失败')
+  } finally {
+    testingWebhook.value = false
+  }
 }
 </script>
 

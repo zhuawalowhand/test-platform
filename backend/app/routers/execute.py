@@ -7,6 +7,7 @@ from ..models import TestCase, TestResult, TestReport, User, Environment
 from ..schemas import ExecuteRequest, TestReportResponse, TestReportDetail, TestResultResponse
 from ..auth import get_current_user
 from ..executor import execute_single_testcase
+from ..webhook import send_webhook_notification
 
 router = APIRouter(prefix="/api/execute", tags=["执行与报告"])
 
@@ -93,7 +94,7 @@ async def execute_tests(
 
     # 构造返回
     pass_rate = (passed_count / report.total * 100) if report.total > 0 else 0
-    return {
+    response_data = {
         "id": report.id,
         "name": report.name,
         "total": report.total,
@@ -105,6 +106,35 @@ async def execute_tests(
         "created_at": report.created_at,
         "results": result_records
     }
+
+    # Webhook 通知
+    if request.webhook_url:
+        # 补充用例名称到结果中
+        case_name_map = {tc.id: tc.name for tc in testcases}
+        enriched_results = []
+        for r in result_records:
+            enriched_results.append({
+                "testcase_id": r.testcase_id,
+                "testcase_name": case_name_map.get(r.testcase_id, ""),
+                "passed": r.passed,
+                "actual_status": r.actual_status,
+                "error_message": r.error_message,
+            })
+        report_summary = {
+            "name": report.name,
+            "total": report.total,
+            "passed": report.passed,
+            "failed": report.failed,
+            "pass_rate": round(pass_rate, 2),
+            "duration_ms": report.duration_ms,
+            "environment": report.environment,
+        }
+        import asyncio
+        asyncio.create_task(
+            send_webhook_notification(request.webhook_url, report_summary, enriched_results)
+        )
+
+    return response_data
 
 
 @router.get("/reports", response_model=List[TestReportResponse], summary="报告列表")
@@ -202,3 +232,30 @@ def get_stats(
         "avg_pass_rate": round(avg_pass_rate, 2),
         "today_executions": today_executions
     }
+
+
+@router.post("/webhook/test", summary="测试 Webhook 通知")
+async def test_webhook(
+    webhook_url: str,
+    current_user: User = Depends(get_current_user)
+):
+    """发送一条测试消息到指定的 Webhook 地址，用于验证配置是否正确"""
+    from pydantic import BaseModel
+
+    mock_report = {
+        "name": "Webhook 连通性测试",
+        "total": 3,
+        "passed": 2,
+        "failed": 1,
+        "pass_rate": 66.67,
+        "duration_ms": 1234.56,
+        "environment": "测试环境",
+    }
+    mock_results = [
+        {"testcase_id": 1, "testcase_name": "登录接口测试", "passed": True, "actual_status": 200, "error_message": None},
+        {"testcase_id": 2, "testcase_name": "获取用户信息", "passed": True, "actual_status": 200, "error_message": None},
+        {"testcase_id": 3, "testcase_name": "提交订单接口", "passed": False, "actual_status": 500, "error_message": "状态码 500，预期 200"},
+    ]
+    result = await send_webhook_notification(webhook_url, mock_report, mock_results)
+    return result
+
